@@ -11,7 +11,6 @@ import 'antd/dist/reset.css';
 const { Content } = Layout;
 const { Title } = Typography;
 
-// Link API SheetDB của bạn (Đã kết nối với Google Sheets)
 const SHEETDB_URL = "https://sheetdb.io/api/v1/9vjgrwbz4hpbq";
 
 const App = () => {
@@ -19,14 +18,13 @@ const App = () => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Hàm tải dữ liệu từ Google Sheets
   const fetchData = async () => {
     setLoading(true);
     try {
       const res = await axios.get(SHEETDB_URL);
       setDataSource(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
-      message.error("Lỗi tải dữ liệu từ hệ thống!");
+      message.error("Lỗi tải dữ liệu!");
     } finally {
       setLoading(false);
     }
@@ -36,7 +34,6 @@ const App = () => {
     fetchData();
   }, []);
 
-  // Hàm xử lý Import file Excel chuẩn như lúc chiều
   const handleImport = (file) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -67,20 +64,19 @@ const App = () => {
         });
 
         if (cleanedData.length > 0) {
-          message.loading({ content: 'Đang lưu vào Google Sheets...', key: 'up' });
+          message.loading({ content: 'Đang lưu...', key: 'up' });
           await axios.post(SHEETDB_URL, { data: cleanedData });
-          message.success({ content: 'Import và Lưu thành công!', key: 'up' });
+          message.success({ content: 'Import thành công!', key: 'up' });
           fetchData();
         }
       } catch (error) {
-        message.error({ content: 'Lỗi Import dữ liệu!', key: 'up' });
+        message.error({ content: 'Lỗi Import!', key: 'up' });
       }
     };
     reader.readAsBinaryString(file);
     return false; 
   };
 
-  // Hàm tìm kiếm
   const filteredData = dataSource.filter(item => {
     const search = searchText.toLowerCase();
     const name = (item.hoten || "").toLowerCase();
@@ -89,32 +85,15 @@ const App = () => {
   });
 
   const columns = [
-    { 
-      title: 'STT', 
-      key: 'stt', 
-      width: 60, 
-      fixed: 'left', 
-      render: (text, record, index) => index + 1 
-    },
-    { 
-      title: 'Thao Tác', 
-      key: 'action', 
-      width: 100, 
-      fixed: 'left', 
-      render: () => (
+    { title: 'STT', key: 'stt', width: 60, fixed: 'left', render: (text, record, index) => index + 1 },
+    { title: 'Thao Tác', key: 'action', width: 100, fixed: 'left', render: () => (
         <Space size="middle">
           <EditOutlined style={{color:'#1890ff', cursor: 'pointer'}} />
           <DeleteOutlined style={{color:'#ff4d4f', cursor: 'pointer'}} />
         </Space>
       ) 
     },
-    { 
-      title: 'Mã Hội viên', 
-      dataIndex: 'mahv', 
-      key: 'mahv', 
-      width: 120, 
-      render: (text) => <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{text}</span> 
-    },
+    { title: 'Mã Hội viên', dataIndex: 'mahv', key: 'mahv', width: 120, render: (text) => <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{text}</span> },
     { title: 'Họ Và Tên', dataIndex: 'hoten', key: 'hoten', width: 200 },
     { title: 'Giới Tính', dataIndex: 'gioitinh', key: 'gioitinh', width: 100 },
     { title: 'Ngày Sinh', dataIndex: 'ngaysinh', key: 'ngaysinh', width: 120 },
@@ -129,11 +108,9 @@ const App = () => {
     { key: '1', label: 'Xuất Excel', icon: <ExportOutlined /> },
     { key: '2', label: 'Download file mẫu', icon: <FileTextOutlined /> },
     { type: 'divider' },
-    { 
-      key: '3', 
-      label: (
+    { key: '3', label: (
         <Upload beforeUpload={handleImport} showUploadList={false}>
-          <span style={{ color: 'red' }}>Import Excel (Thêm vào Sheets)</span>
+          <span style={{ color: 'red' }}>Import Excel (Thêm mới)</span>
         </Upload>
       ), 
       icon: <ImportOutlined style={{ color: 'red' }} /> 
