@@ -1,6 +1,5 @@
 {
-  "github": {
-    "silent": true
-  },
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "react-scripts build",
+  "framework": "create-react-app"
 }
