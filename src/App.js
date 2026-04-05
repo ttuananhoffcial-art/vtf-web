@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Typography, Layout, Dropdown, Upload, message, Input, Checkbox } from 'antd';
-import { DownOutlined, SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Layout, Input, message, Checkbox } from 'antd';
+import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import 'antd/dist/reset.css';
 
@@ -38,7 +38,7 @@ const App = () => {
     { title: 'Thao tác', key: 'action', width: 80, render: () => (
       <Space><EditOutlined style={{color:'red'}} /><DeleteOutlined style={{color:'red'}} /></Space>
     )},
-    { title: 'Mã hội viên', dataIndex: 'mahv', key: 'mahv', width: 120, render: (text) => <span style={{color:'#1d39c4', fontWeight:'bold'}}>{text}</span> },
+    { title: 'Mã hội viên', dataIndex: 'mahv', key: 'mahv', width: 120, render: (text) => <b style={{color:'#1d39c4'}}>{text}</b> },
     { title: 'Họ và tên', dataIndex: 'hoten', key: 'hoten', width: 180 },
     { title: 'Giới tính', dataIndex: 'gioitinh', key: 'gioitinh', width: 90 },
     { title: 'Ngày sinh', dataIndex: 'ngaysinh', key: 'ngaysinh', width: 110 },
@@ -53,13 +53,13 @@ const App = () => {
   if (!isLoggedIn) {
     return (
       <div style={{ background: '#fff', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '50px' }}>
-        <img src="https://vtf.org.vn/wp-content/uploads/2021/06/logo-vtf.png" alt="logo" style={{ width: 250 }} />
-        <h1 style={{ fontWeight: 'bold', fontSize: '28px', marginTop: '10px' }}>LIÊN ĐOÀN TAEKWONDO VIỆT NAM</h1>
-        <div style={{ width: '400px', marginTop: '30px' }}>
+        <img src="https://vtf.org.vn/wp-content/uploads/2021/06/logo-vtf.png" alt="logo" style={{ width: 220 }} />
+        <h1 style={{ fontWeight: 'bold', fontSize: '26px', marginTop: '10px', color: '#000' }}>LIÊN ĐOÀN TAEKWONDO VIỆT NAM</h1>
+        <div style={{ width: '350px', marginTop: '30px' }}>
           <Input placeholder="Tên đăng nhập *" variant="borderless" style={{ borderBottom: '1px solid #ccc', marginBottom: '20px' }} onChange={e => setUsername(e.target.value)} />
           <Input.Password placeholder="Mật khẩu *" variant="borderless" style={{ borderBottom: '1px solid #ccc', marginBottom: '25px' }} onChange={e => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} />
           <div style={{ textAlign: 'center' }}>
-            <Button type="primary" onClick={handleLogin} style={{ background: '#3f51b5', width: '120px' }}>Đăng nhập</Button>
+            <Button type="primary" onClick={handleLogin} style={{ background: '#3f51b5', width: '150px', height: '40px' }}>Đăng nhập</Button>
           </div>
         </div>
       </div>
@@ -81,7 +81,7 @@ const App = () => {
             <Button type="primary" icon={<DownOutlined />} style={{ background: '#1d39c4' }}>Hành động</Button>
           </Space>
         </div>
-        <Table columns={columns} dataSource={dataSource} loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} pagination={{ pageSize: 10, showTotal: (total) => `Tổng số: ${total} hội viên` }} />
+        <Table columns={columns} dataSource={dataSource} loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} pagination={{ pageSize: 10 }} />
       </div>
     </div>
   );
