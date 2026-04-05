@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Typography, Layout, Input, message, Checkbox } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Layout, Input, message, Checkbox, Dropdown, Upload } from 'antd';
+import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownOutlined, ExportOutlined, ImportOutlined, FileTextOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import 'antd/dist/reset.css';
 
 const { Content } = Layout;
@@ -13,6 +14,7 @@ const App = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [dataSource, setDataSource] = useState([]);
+  const [searchText, setSearchText] = useState(''); // Lưu nội dung ô tìm kiếm
   const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
@@ -33,6 +35,23 @@ const App = () => {
     finally { setLoading(false); }
   };
 
+  // LOGIC TÌM KIẾM: Lọc dữ liệu dựa trên searchText
+  const filteredData = dataSource.filter(item => {
+    const search = searchText.toLowerCase();
+    const hoten = (item.hoten || "").toLowerCase();
+    const mahv = (item.mahv || "").toLowerCase();
+    return hoten.includes(search) || mahv.includes(search);
+  });
+
+  // LOGIC XUẤT EXCEL
+  const handleExport = () => {
+    const worksheet = XLSX.utils.json_to_sheet(dataSource);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HoiVien");
+    XLSX.writeFile(workbook, "Danh_Sach_Hoi_Vien_VTF.xlsx");
+    message.success("Đang tải xuống file Excel...");
+  };
+
   const columns = [
     { title: 'STT', key: 'stt', width: 50, render: (t, r, i) => i + 1 },
     { title: 'Thao tác', key: 'action', width: 80, render: () => (
@@ -48,6 +67,14 @@ const App = () => {
     { title: 'Cấp đẳng', dataIndex: 'capdang', key: 'capdang', width: 100 },
     { title: 'Mã GAL', dataIndex: 'magal', key: 'magal', width: 100 },
     { title: 'Mã GSGK', dataIndex: 'magsgk', key: 'magsgk', width: 100 },
+  ];
+
+  // MENU CỦA NÚT HÀNH ĐỘNG
+  const actionItems = [
+    { key: 'export', label: 'Xuất Excel', icon: <ExportOutlined />, onClick: handleExport },
+    { key: 'sample', label: 'Tải file mẫu', icon: <FileTextOutlined /> },
+    { type: 'divider' },
+    { key: 'import', label: 'Import Excel', icon: <ImportOutlined />, danger: true },
   ];
 
   if (!isLoggedIn) {
@@ -75,13 +102,22 @@ const App = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
           <Title level={3} style={{ color: '#1d39c4', margin: 0 }}>Danh sách hội viên</Title>
           <Space>
-            <Input prefix={<SearchOutlined />} placeholder="Tìm kiếm" style={{ width: 250 }} />
-            <Button type="primary" icon={<SearchOutlined />} style={{ background: '#1d39c4' }}>Tìm kiếm</Button>
+            <Input 
+              prefix={<SearchOutlined />} 
+              placeholder="Tìm kiếm theo tên hoặc mã..." 
+              style={{ width: 300 }} 
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)} // Cập nhật text khi gõ
+              allowClear
+            />
+            <Button type="primary" icon={<SearchOutlined />} style={{ background: '#1d39c4' }} onClick={fetchData}>Tìm kiếm</Button>
             <Button type="primary" icon={<PlusOutlined />} style={{ background: '#1d39c4' }}>Thêm mới</Button>
-            <Button type="primary" icon={<DownOutlined />} style={{ background: '#1d39c4' }}>Hành động</Button>
+            <Dropdown menu={{ items: actionItems }}>
+              <Button type="primary" icon={<DownOutlined />} style={{ background: '#1d39c4' }}>Hành động</Button>
+            </Dropdown>
           </Space>
         </div>
-        <Table columns={columns} dataSource={dataSource} loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} pagination={{ pageSize: 10 }} />
+        <Table columns={columns} dataSource={filteredData} loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} pagination={{ pageSize: 10 }} />
       </div>
     </div>
   );
