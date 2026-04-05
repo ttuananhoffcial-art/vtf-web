@@ -9,9 +9,10 @@ const { Content, Header } = Layout;
 const { Title } = Typography;
 const SHEETDB_URL = "https://sheetdb.io/api/v1/9vjgrwbz4hpbq";
 
+// DANH SÁCH TÀI KHOẢN (Bạn có thể thêm ở đây)
 const USERS = [
   { username: 'admin', password: '1', role: 'ADMIN', hoten: 'Quản trị viên', clb: 'ALL' },
-  { username: 'CLB_00062', password: '1', role: 'USER', hoten: 'CLB Phú Lâm', clb: 'CLB_00062' }
+  { username: 'CLB_00062', password: '1', role: 'USER', hoten: 'Phan Thanh Phong', clb: 'CLB_00062' }
 ];
 
 const App = () => {
@@ -48,9 +49,8 @@ const App = () => {
         const wb = XLSX.read(e.target.result, { type: 'binary' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         const final = raw.map(r => ({ ...r, maclb: user.role === 'USER' ? user.clb : r.maclb }));
-        message.loading({ content: 'Đang thêm dữ liệu...', key: 'up' });
         await axios.post(SHEETDB_URL, { data: final });
-        message.success({ content: 'Import thành công!', key: 'up' });
+        message.success("Thành công!");
         fetchData(user);
       } catch (err) { message.error("Lỗi file Excel!"); }
     };
@@ -59,18 +59,20 @@ const App = () => {
   };
 
   const columns = [
-    { title: 'STT', key: 'stt', width: 70, fixed: 'left', render: (t,r,i) => (pagination.current-1)*pagination.pageSize + i + 1 },
-    { title: 'Thao Tác', key: 'action', width: 100, fixed: 'left', render: () => <Space><EditOutlined style={{color:'#1890ff'}} /><DeleteOutlined style={{color:'red'}} /></Space> },
-    { title: 'Mã Hội Viên', dataIndex: 'mahv', key: 'mahv', width: 130, render: (t) => <b style={{color:'#1d39c4'}}>{t}</b> },
-    { title: 'Họ và Tên', dataIndex: 'hoten', key: 'hoten', width: 180 },
+    { title: 'STT', key: 'stt', width: 70, fixed: 'left', render: (t, r, i) => (pagination.current - 1) * pagination.pageSize + i + 1 },
+    { title: 'Thao tác', key: 'action', width: 100, fixed: 'left', render: () => (
+      <Space><EditOutlined style={{color: '#1890ff'}} /><DeleteOutlined style={{color: 'red'}} /></Space>
+    )},
+    { title: 'Mã hội viên', dataIndex: 'mahv', key: 'mahv', width: 130, render: (t) => <b style={{color:'#1d39c4'}}>{t}</b> },
+    { title: 'Họ và tên', dataIndex: 'hoten', key: 'hoten', width: 180 },
     { title: 'Mã CLB', dataIndex: 'maclb', key: 'maclb', width: 100 },
     { title: 'Tên CLB', dataIndex: 'tenclb', key: 'tenclb', width: 200 },
-    { title: 'Đẳng Cấp', dataIndex: 'capdang', key: 'capdang', width: 100 },
+    { title: 'Đẳng cấp', dataIndex: 'capdang', key: 'capdang', width: 100 },
   ];
 
   if (!isLoggedIn) return (
     <div style={{ background: '#fff', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '50px' }}>
-      <img src="https://vtf.org.vn/wp-content/uploads/2021/06/logo-vtf.png" width={180} />
+      <img src="https://vtf.org.vn/wp-content/uploads/2021/06/logo-vtf.png" width={180} alt="logo" />
       <Title level={2} style={{marginTop: 20}}>LIÊN ĐOÀN TAEKWONDO VIỆT NAM</Title>
       <Form onFinish={handleLogin} style={{ width: 320, marginTop: 20 }}>
         <Form.Item name="username"><Input placeholder="Tên đăng nhập" variant="borderless" style={{ borderBottom: '1px solid #ccc' }} /></Form.Item>
@@ -87,13 +89,13 @@ const App = () => {
         <Space>
           <span style={{fontWeight:'bold'}}>{user.hoten}</span>
           {user.role === 'ADMIN' && <Button icon={<SettingOutlined />} onClick={() => setIsAdminModalOpen(true)} type="primary" ghost>Quản trị</Button>}
-          <Button onClick={() => setIsLoggedIn(false)}>Đăng xuất</Button>
+          <Button onClick={() => setIsLoggedIn(false)}>Thoát</Button>
         </Space>
       </Header>
       <Content style={{ padding: 20 }}>
         <div style={{ background: '#fff', padding: 20, borderRadius: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15 }}>
-            <Title level={5}>Thông Tin Hội Viên</Title>
+            <Title level={5}>Thông tin hội viên</Title>
             <Space>
               <Input prefix={<SearchOutlined />} placeholder="Tìm kiếm nhanh..." onChange={e => setSearchText(e.target.value)} allowClear />
               <Dropdown menu={{ items: [
@@ -113,31 +115,26 @@ const App = () => {
         </div>
       </Content>
 
-      {/* MODAL QUẢN TRỊ (HÌNH 1) */}
-      <Modal title="Danh sách Tài khoản Quản trị" open={isAdminModalOpen} onCancel={() => setIsAdminModalOpen(false)} width={800} footer={null}>
+      <Modal title="Quản lý tài khoản" open={isAdminModalOpen} onCancel={() => setIsAdminModalOpen(false)} width={800} footer={null}>
         <Table size="small" dataSource={USERS} rowKey="username" columns={[
           { title: 'Tài khoản', dataIndex: 'username', render: (t) => <a onClick={() => setIsUserDetailOpen(true)}>{t}</a> },
-          { title: 'Vai trò', dataIndex: 'role' },
           { title: 'Mã CLB', dataIndex: 'clb' },
-          { title: 'Sửa', render: () => <EditOutlined onClick={() => setIsUserDetailOpen(true)} style={{color:'#1890ff'}} /> }
+          { title: 'Hành động', render: () => <EditOutlined onClick={() => setIsUserDetailOpen(true)} style={{color:'#1890ff'}} /> }
         ]} />
       </Modal>
 
-      {/* MODAL CHI TIẾT TÀI KHOẢN (HÌNH 2) - CÓ Ô MẬT KHẨU */}
-      <Modal title="Thông tin chi tiết tài khoản" open={isUserDetailOpen} onCancel={() => setIsUserDetailOpen(false)} width={700} footer={[<Button key="1" type="primary" onClick={() => setIsUserDetailOpen(false)}>Lưu thay đổi</Button>]}>
+      <Modal title="Tài khoản chi tiết thông tin" open={isUserDetailOpen} onCancel={() => setIsUserDetailOpen(false)} width={750} footer={[<Button key="1" type="primary" onClick={() => setIsUserDetailOpen(false)}>Lưu</Button>]}>
         <Row gutter={20}>
           <Col span={12}>
             <Form layout="vertical">
               <Form.Item label="Tên đăng nhập"><Input defaultValue="CLB_00062" disabled /></Form.Item>
-              <Form.Item label="Mật khẩu (Admin đổi tại đây)"><Input.Password placeholder="Nhập mật khẩu mới" prefix={<LockOutlined />} /></Form.Item>
+              <Form.Item label="Mật khẩu"><Input.Password placeholder="Admin đổi mật khẩu tại đây" prefix={<LockOutlined />} /></Form.Item>
               <Checkbox checked>Kích hoạt tài khoản</Checkbox>
             </Form>
           </Col>
-          <Col span={12} style={{ borderLeft: '1px solid #eee', paddingLeft: 20 }}>
+          <Col span={12}>
             <Title level={5}>Phân quyền</Title>
-            <Checkbox checked>Chỉ hiển thị dữ liệu theo Mã CLB</Checkbox>
-            <br/><br/>
-            <Typography.Text type="secondary">Ghi chú: Tài khoản User khi Import Excel sẽ tự động bị gán Mã CLB của chính họ.</Typography.Text>
+            <Checkbox checked>Lọc dữ liệu theo Mã CLB</Checkbox>
           </Col>
         </Row>
       </Modal>
