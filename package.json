@@ -1,6 +1,6 @@
 {
   "name": "vtf-web",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
@@ -9,14 +9,11 @@
     "antd": "^5.0.0",
     "@ant-design/icons": "^5.0.0",
     "axios": "^1.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "dayjs": "^1.11.7"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "CI=false react-scripts build"
-  },
-  "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   }
 }
