@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Typography, Layout, Input, message, Checkbox, Dropdown, Upload } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownOutlined, ExportOutlined, ImportOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Layout, Input, message, Checkbox, Dropdown, Modal } from 'antd';
+import { 
+  SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, 
+  DownOutlined, ExportOutlined, ImportOutlined, FileTextOutlined, ExclamationCircleOutlined 
+} from '@ant-design/icons';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import 'antd/dist/reset.css';
 
 const { Content } = Layout;
 const { Title } = Typography;
+const { confirm } = Modal;
 const SHEETDB_URL = "https://sheetdb.io/api/v1/9vjgrwbz4hpbq";
 
 const App = () => {
@@ -14,8 +18,9 @@ const App = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [dataSource, setDataSource] = useState([]);
-  const [searchText, setSearchText] = useState(''); // Lưu nội dung ô tìm kiếm
+  const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]); // Lưu các dòng được tích chọn
 
   const handleLogin = () => {
     if (username === 'admin' && password === '123456') {
@@ -35,43 +40,74 @@ const App = () => {
     finally { setLoading(false); }
   };
 
-  // LOGIC TÌM KIẾM: Lọc dữ liệu dựa trên searchText
-  const filteredData = dataSource.filter(item => {
-    const search = searchText.toLowerCase();
-    const hoten = (item.hoten || "").toLowerCase();
-    const mahv = (item.mahv || "").toLowerCase();
-    return hoten.includes(search) || mahv.includes(search);
-  });
-
-  // LOGIC XUẤT EXCEL
-  const handleExport = () => {
-    const worksheet = XLSX.utils.json_to_sheet(dataSource);
+  // LOGIC XUẤT EXCEL (Chỉ xuất những người được chọn)
+  const handleExportSelected = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Vui lòng tích chọn ít nhất một người để xuất Excel!");
+      return;
+    }
+    const dataToExport = dataSource.filter((item, index) => selectedRowKeys.includes(index));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "HoiVien");
-    XLSX.writeFile(workbook, "Danh_Sach_Hoi_Vien_VTF.xlsx");
-    message.success("Đang tải xuống file Excel...");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HoiVienDuocChon");
+    XLSX.writeFile(workbook, "Danh_Sach_Chon_Loc.xlsx");
+    message.success(`Đã xuất Excel ${selectedRowKeys.length} hội viên!`);
+  };
+
+  // LOGIC XÁC NHẬN XÓA
+  const showDeleteConfirm = (index) => {
+    confirm({
+      title: 'Bạn có chắc chắn muốn xóa hội viên này?',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Hành động này không thể hoàn tác.',
+      okText: 'Đồng ý xóa',
+      okType: 'danger',
+      cancelText: 'Hủy bỏ',
+      onOk() {
+        message.loading("Đang xóa...");
+        // Ở đây sẽ gọi API xóa của SheetDB nếu cần
+        const newData = [...dataSource];
+        newData.splice(index, 1);
+        setDataSource(newData);
+        message.success("Đã xóa thành công!");
+      },
+    });
   };
 
   const columns = [
-    { title: 'STT', key: 'stt', width: 50, render: (t, r, i) => i + 1 },
-    { title: 'Thao tác', key: 'action', width: 80, render: () => (
-      <Space><EditOutlined style={{color:'red'}} /><DeleteOutlined style={{color:'red'}} /></Space>
-    )},
-    { title: 'Mã hội viên', dataIndex: 'mahv', key: 'mahv', width: 120, render: (text) => <b style={{color:'#1d39c4'}}>{text}</b> },
-    { title: 'Họ và tên', dataIndex: 'hoten', key: 'hoten', width: 180 },
-    { title: 'Giới tính', dataIndex: 'gioitinh', key: 'gioitinh', width: 90 },
-    { title: 'Ngày sinh', dataIndex: 'ngaysinh', key: 'ngaysinh', width: 110 },
-    { title: 'Mã đơn vị', dataIndex: 'madonvi', key: 'madonvi', width: 250 },
-    { title: 'Mã CLB', dataIndex: 'maclb', key: 'maclb', width: 100 },
-    { title: 'Tên CLB', dataIndex: 'tenclb', key: 'tenclb', width: 200 },
-    { title: 'Cấp đẳng', dataIndex: 'capdang', key: 'capdang', width: 100 },
-    { title: 'Mã GAL', dataIndex: 'magal', key: 'magal', width: 100 },
-    { title: 'Mã GSGK', dataIndex: 'magsgk', key: 'magsgk', width: 100 },
+    { title: 'STT', key: 'stt', width: 60, fixed: 'left', render: (t, r, i) => i + 1 },
+    { 
+      title: 'Thao Tác', 
+      key: 'action', 
+      width: 100, 
+      fixed: 'left', 
+      render: (text, record, index) => (
+        <Space size="middle">
+          <EditOutlined style={{color:'#1890ff', cursor: 'pointer'}} onClick={() => message.info("Chức năng sửa đang được cập nhật!")} />
+          <DeleteOutlined style={{color:'#ff4d4f', cursor: 'pointer'}} onClick={() => showDeleteConfirm(index)} />
+        </Space>
+      ) 
+    },
+    { title: 'Mã Hội Viên', dataIndex: 'mahv', key: 'mahv', width: 130, render: (text) => <b style={{color:'#1d39c4'}}>{text}</b> },
+    { title: 'Họ và Tên', dataIndex: 'hoten', key: 'hoten', width: 200 },
+    { title: 'Giới Tính', dataIndex: 'gioitinh', key: 'gioitinh', width: 100 },
+    { title: 'Ngày Sinh', dataIndex: 'ngaysinh', key: 'ngaysinh', width: 120 },
+    { title: 'Mã Đơn Vị', dataIndex: 'madonvi', key: 'madonvi', width: 200 },
+    { title: 'Mã CLB', dataIndex: 'maclb', key: 'maclb', width: 110 },
+    { title: 'Tên CLB', dataIndex: 'tenclb', key: 'tenclb', width: 220 },
+    { title: 'Cấp Đẳng', dataIndex: 'capdang', key: 'capdang', width: 110 },
+    { title: 'Mã GAL', dataIndex: 'magal', key: 'magal', width: 110 },
+    { title: 'Mã GSGK', dataIndex: 'magsgk', key: 'magsgk', width: 110 },
   ];
 
-  // MENU CỦA NÚT HÀNH ĐỘNG
+  // Cấu hình tích chọn dòng (Checkbox)
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (keys) => setSelectedRowKeys(keys),
+  };
+
   const actionItems = [
-    { key: 'export', label: 'Xuất Excel', icon: <ExportOutlined />, onClick: handleExport },
+    { key: 'export', label: 'Xuất Excel người đã chọn', icon: <ExportOutlined />, onClick: handleExportSelected },
     { key: 'sample', label: 'Tải file mẫu', icon: <FileTextOutlined /> },
     { type: 'divider' },
     { key: 'import', label: 'Import Excel', icon: <ImportOutlined />, danger: true },
@@ -104,20 +140,28 @@ const App = () => {
           <Space>
             <Input 
               prefix={<SearchOutlined />} 
-              placeholder="Tìm kiếm theo tên hoặc mã..." 
-              style={{ width: 300 }} 
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)} // Cập nhật text khi gõ
+              placeholder="Tìm theo Mã hoặc Họ tên..." 
+              style={{ width: 280 }} 
+              onChange={e => setSearchText(e.target.value)}
               allowClear
             />
-            <Button type="primary" icon={<SearchOutlined />} style={{ background: '#1d39c4' }} onClick={fetchData}>Tìm kiếm</Button>
             <Button type="primary" icon={<PlusOutlined />} style={{ background: '#1d39c4' }}>Thêm mới</Button>
             <Dropdown menu={{ items: actionItems }}>
               <Button type="primary" icon={<DownOutlined />} style={{ background: '#1d39c4' }}>Hành động</Button>
             </Dropdown>
           </Space>
         </div>
-        <Table columns={columns} dataSource={filteredData} loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} pagination={{ pageSize: 10 }} />
+        <Table 
+          rowSelection={rowSelection}
+          columns={columns} 
+          dataSource={dataSource.filter(i => (i.hoten||"").toLowerCase().includes(searchText.toLowerCase()) || (i.mahv||"").toLowerCase().includes(searchText.toLowerCase()))} 
+          loading={loading} 
+          bordered 
+          size="small" 
+          scroll={{ x: 1700 }} 
+          rowKey={(r, i) => i} 
+          pagination={{ pageSize: 10, showTotal: (t) => `Tổng: ${t} hội viên` }} 
+        />
       </div>
     </div>
   );
