@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Typography, Layout, Input, message, Checkbox, Dropdown, Modal } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownOutlined, ExportOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, DownOutlined, ExportOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import 'antd/dist/reset.css';
@@ -31,11 +31,10 @@ const App = () => {
     try {
       const res = await axios.get(SHEETDB_URL);
       setDataSource(Array.isArray(res.data) ? res.data : []);
-    } catch (e) { message.error("Không thể tải dữ liệu từ Sheets!"); }
+    } catch (e) { message.error("Không thể tải dữ liệu!"); }
     finally { setLoading(false); }
   };
 
-  // XÓA ĐỒNG BỘ: Xóa trên Web là mất luôn trên Sheets
   const handleDelete = (record) => {
     confirm({
       title: `Xác nhận xóa: ${record.hoten}?`,
@@ -46,9 +45,8 @@ const App = () => {
       async onOk() {
         try {
           message.loading({ content: "Đang xóa...", key: 'del' });
-          // Lệnh xóa dựa trên Mã Hội Viên (mahv)
           await axios.delete(`${SHEETDB_URL}/mahv/${record.mahv}`);
-          message.success({ content: "Đã xóa trên Sheets!", key: 'del' });
+          message.success({ content: "Đã xóa thành công!", key: 'del' });
           fetchData();
         } catch (e) { message.error("Lỗi xóa dữ liệu!"); }
       },
@@ -61,16 +59,16 @@ const App = () => {
       : dataSource;
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "VTF");
-    XLSX.writeFile(workbook, "Danh_Sach_VTF.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSach");
+    XLSX.writeFile(workbook, "Thong_Tin_Hoi_Vien.xlsx");
   };
 
   const columns = [
     { title: 'STT', key: 'stt', width: 60, fixed: 'left', render: (t, r, i) => i + 1 },
     { title: 'Thao Tác', key: 'action', width: 100, fixed: 'left', render: (t, r) => (
       <Space>
-        <EditOutlined style={{color:'#1890ff'}} onClick={() => message.info("Đang phát triển...")} />
-        <DeleteOutlined style={{color:'#ff4d4f'}} onClick={() => handleDelete(r)} />
+        <EditOutlined style={{color:'#1890ff', cursor:'pointer'}} onClick={() => message.info("Đang phát triển...")} />
+        <DeleteOutlined style={{color:'#ff4d4f', cursor:'pointer'}} onClick={() => handleDelete(r)} />
       </Space>
     )},
     { title: 'Mã Hội Viên', dataIndex: 'mahv', key: 'mahv', width: 130, render: (t) => <b style={{color:'#1d39c4'}}>{t}</b> },
@@ -80,9 +78,7 @@ const App = () => {
     { title: 'Mã Đơn Vị', dataIndex: 'madonvi', key: 'madonvi', width: 150 },
     { title: 'Mã CLB', dataIndex: 'maclb', key: 'maclb', width: 100 },
     { title: 'Tên CLB', dataIndex: 'tenclb', key: 'tenclb', width: 200 },
-    { title: 'Cấp Đẳng', dataIndex: 'capdang', key: 'capdang', width: 100 },
-    { title: 'Mã GAL', dataIndex: 'magal', key: 'magal', width: 100 },
-    { title: 'Mã GSGK', dataIndex: 'magsgk', key: 'magsgk', width: 100 },
+    { title: 'Đẳng Cấp', dataIndex: 'capdang', key: 'capdang', width: 100 },
   ];
 
   if (!isLoggedIn) {
@@ -103,12 +99,11 @@ const App = () => {
     <div style={{ background: '#f0f2f5', minHeight: '100vh', padding: '20px' }}>
       <div style={{ background: '#fff', padding: '20px', borderRadius: '8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <Title level={3} style={{ color: '#1d39c4', margin: 0 }}>Danh sách hội viên</Title>
+          <Title level={3} style={{ color: '#1d39c4', margin: 0 }}>Thông Tin Hội Viên</Title>
           <Space>
-            <Input prefix={<SearchOutlined />} placeholder="Tìm kiếm nhanh..." style={{ width: 250 }} onChange={e => setSearchText(e.target.value)} allowClear />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => message.info("Tính năng Thêm đang cập nhật")}>Thêm mới</Button>
+            <Input prefix={<SearchOutlined />} placeholder="Tìm tên hoặc mã..." style={{ width: 250 }} onChange={e => setSearchText(e.target.value)} allowClear />
             <Dropdown menu={{ items: [{ key: 'exp', label: 'Xuất Excel đã chọn', icon: <ExportOutlined />, onClick: handleExport }] }}>
-              <Button icon={<DownOutlined />}>Hành động</Button>
+              <Button type="primary" icon={<DownOutlined />} style={{ background: '#1d39c4' }}>Hành động</Button>
             </Dropdown>
           </Space>
         </div>
@@ -116,7 +111,17 @@ const App = () => {
           rowSelection={{ selectedRowKeys, onChange: (k) => setSelectedRowKeys(k) }}
           columns={columns} 
           dataSource={dataSource.filter(i => (i.hoten||"").toLowerCase().includes(searchText.toLowerCase()) || (i.mahv||"").toLowerCase().includes(searchText.toLowerCase()))} 
-          loading={loading} bordered size="small" scroll={{ x: 1600 }} rowKey={(r, i) => i} 
+          loading={loading} 
+          bordered 
+          size="small" 
+          scroll={{ x: 1300 }} 
+          rowKey={(r, i) => i} 
+          pagination={{ 
+            pageSize: 10, 
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} người` 
+          }}
         />
       </div>
     </div>
