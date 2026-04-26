@@ -191,7 +191,7 @@ const App = () => {
   const pdfInputRef = useRef(null);
   const excelResultInputRef = useRef(null);
 
-  const LOGO_PATH = "/logo.png.jpg";
+  const LOGO_PATH = "Chèn LOGO vào Đây";
 
   const [notifications, setNotifications] = useState(() => JSON.parse(localStorage.getItem('vtf_notifications') || '[]'));
   const [hasNewNoti, setHasNewNoti] = useState(false); 
